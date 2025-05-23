@@ -82,3 +82,4 @@ async def on_ready():
         await canal_relatorio.send(view=RelatorioView())
 
 bot.run(TOKEN)
+#trigger redeploy
