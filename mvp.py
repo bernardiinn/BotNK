@@ -9,7 +9,9 @@ def calcular_top_mvp_vitorias(inicio=None, limite=3):
     if not inicio:
         inicio = get_inicio_semana()
 
-    conn = sqlite3.connect("relatorio.db")
+    from utils.db import get_db_connection
+    conn = get_db_connection()
+
     c = conn.cursor()
 
     # Buscar vitórias da semana

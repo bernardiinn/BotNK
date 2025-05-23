@@ -35,6 +35,9 @@ async def on_ready():
     GUILD_ID = 1355966070548201532
     await bot.tree.sync(guild=discord.Object(id=GUILD_ID))
     logger.info(f"🤖 Bot conectado como {bot.user}. Comandos sincronizados.")
+    logger.info(f"✅ Bot online como {bot.user}")
+    logger.info(f"📁 Diretório de trabalho: {os.getcwd()}")
+    logger.info(f"📄 Caminho do banco: {os.path.abspath('relatorio.db')}")
 
     # Criar tabelas no banco
     criar_tabelas()
