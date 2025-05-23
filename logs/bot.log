@@ -1,0 +1,18 @@
+2025-05-23 02:34:20,554 | WARNING  | discord.client:318 | PyNaCl is not installed, voice will NOT be supported
+2025-05-23 02:34:53,631 | WARNING  | discord.client:318 | PyNaCl is not installed, voice will NOT be supported
+2025-05-23 02:34:53,641 | INFO     | discord.client:643 | logging in using static token
+2025-05-23 02:34:54,753 | INFO     | discord.gateway:562 | Shard ID None has connected to Gateway (Session ID: 8c782ebab0b6da3d3ef88997d0b83917).
+2025-05-23 02:34:56,956 | INFO     | NKBot:37 | 🤖 Bot conectado como NKBot#4102. Comandos sincronizados.
+2025-05-23 02:34:56,957 | INFO     | NKBot:51 | ✅ Todas as tabelas foram criadas ou já existiam.
+2025-05-23 02:34:57,354 | INFO     | NKBot:60 | [✅] MetaView restaurada para JhoN$ no canal meta-jhon
+2025-05-23 02:34:57,606 | INFO     | NKBot:60 | [✅] MetaView restaurada para JhoN$ no canal meta-jhon
+2025-05-23 02:34:59,171 | INFO     | NKBot:60 | [✅] MetaView restaurada para Wend no canal meta-will
+2025-05-23 02:34:59,851 | INFO     | NKBot:60 | [✅] MetaView restaurada para Sniper | 480 no canal meta-sniper
+2025-05-23 02:35:00,374 | INFO     | NKBot:60 | [✅] MetaView restaurada para Bernardin no canal meta-bernadin
+2025-05-23 02:35:00,602 | INFO     | NKBot:60 | [✅] MetaView restaurada para Bernardin no canal meta-bernadin
+2025-05-23 02:35:00,916 | INFO     | NKBot:60 | [✅] MetaView restaurada para Bernardin no canal meta-bernadin
+2025-05-23 02:35:01,923 | INFO     | NKBot:60 | [✅] MetaView restaurada para ! SP3C no canal meta-spec
+2025-05-23 02:35:03,121 | INFO     | NKBot:60 | [✅] MetaView restaurada para ! Miih | 5770 no canal meta-miih
+2025-05-23 02:35:04,500 | INFO     | NKBot:60 | [✅] MetaView restaurada para Pierre | 3815 no canal meta-pierre
+2025-05-23 02:35:05,182 | INFO     | NKBot:60 | [✅] MetaView restaurada para Rossi no canal meta-rossi
+2025-05-23 02:35:06,147 | INFO     | NKBot:60 | [✅] MetaView restaurada para _bielllls_ no canal meta-biel
