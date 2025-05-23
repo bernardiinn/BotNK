@@ -22,6 +22,11 @@ def setup(bot):
     async def texas(ctx):
         await contar(ctx, 'texas', "🐂 Texas foi altamente gado na situacao {} vezes.")
 
+    @bot.command(name="sucumba")
+    async def sucumba(ctx):
+        mensagem = "**⚠️ Espero que você *sucumba!* ⚠️**"
+        await ctx.send(mensagem)
+
     @bot.command(name="marsola")
     async def marsola(ctx):
         conn = sqlite3.connect('relatorio.db')
@@ -33,7 +38,7 @@ def setup(bot):
             c.execute("SELECT valor FROM contadores WHERE nome = ?", (nome,))
             total += c.fetchone()[0]
         conn.close()
-        xingamentos = "burro/lerdão/kitty/doidao/lesado/baiano otário/carente/pederasta/desnecessário morto ditador gado"
+        xingamentos = "Burro, Lerdão, Kitty, Doidao, Lesado, Otário, Carente, Pederasta, Desnecessário"
         await ctx.send(f"🧠 Marsola foi {xingamentos} {total} vezes.")
 
     async def contar(ctx, nome, mensagem):
