@@ -22,13 +22,14 @@ intents.members = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 # Imports dos módulos
-from Comandos import contadores, slash
+from Comandos import contadores, slash, debug
 from Views.acao import setup_views as setup_acao_views
 from Database.schema import criar_tabelas
 
 # Setup dos módulos
 contadores.setup(bot)
 slash.setup(bot)
+debug.setup(bot)
 
 @bot.event
 async def on_ready():
