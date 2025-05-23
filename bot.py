@@ -61,24 +61,33 @@ async def on_ready():
             except Exception as e:
                 logger.warning(f"[⚠️] Erro ao restaurar MetaView no canal {channel.name}: {e}")
 
-    # Painel de relatórios
+    # Painel de Relatórios (fora do loop de canais)
     from relatorio import RelatorioView
     canal_relatorio = bot.get_channel(ID_CANAL_RELATORIO)
     if canal_relatorio:
+        gif_encontrado = False
+
         async for msg in canal_relatorio.history(limit=50):
-            if msg.author == bot.user and msg.components:
-                try:
-                    await msg.delete()
-                except:
-                    pass
+            if msg.author == bot.user and msg.embeds:
+                embed = msg.embeds[0]
+                if "📊 Painel de Relatórios" in embed.title:
+                    gif_encontrado = True
+                elif msg.components:
+                    try:
+                        await msg.delete()
+                    except:
+                        pass
 
-        # GIF
-        embed_gif = discord.Embed(title="📊 Painel de Relatórios", description="Veja os dados da familia abaixo!", color=discord.Color.blurple())
-        file = discord.File("NKgif.gif", filename="relatorio.gif")
-        embed_gif.set_image(url="attachment://relatorio.gif")
-        await canal_relatorio.send(embed=embed_gif, file=file)
+        if not gif_encontrado:
+            embed_gif = discord.Embed(
+                title="📊 Painel de Relatórios",
+                description="Veja os dados da familia abaixo!",
+                color=discord.Color.blurple()
+            )
+            file = discord.File("NKgif.gif", filename="relatorio.gif")
+            embed_gif.set_image(url="attachment://relatorio.gif")
+            await canal_relatorio.send(embed=embed_gif, file=file)
 
-        # Botões
         await canal_relatorio.send(view=RelatorioView())
 
 bot.run(TOKEN)
