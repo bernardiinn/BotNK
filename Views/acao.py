@@ -31,22 +31,35 @@ class EditarAcaoModal(discord.ui.Modal, title="Editar Ação"):
         self.add_item(self.dinheiro)
 
     async def on_submit(self, interaction: discord.Interaction):
+        # Validar e formatar a data/hora
+        try:
+            partes = self.data_hora.value.split(" -")
+            data_raw = partes[0] + " - " + partes[1]  # remove timezone extra se houver
+            dt = datetime.strptime(data_raw.strip(), "%d/%m/%Y - %H:%M")
+            data_formatada = dt.strftime("%d/%m/%Y - %H:%M")
+        except Exception as e:
+            await interaction.response.send_message(f"❌ Data e hora inválida: {e}", ephemeral=True)
+            return
+
+        # Validar e formatar o dinheiro
         try:
             dinheiro_formatado = f"R$ {int(self.dinheiro.value):,}".replace(",", ".")
         except ValueError:
             await interaction.response.send_message("❌ Dinheiro inválido.", ephemeral=True)
             return
 
-        cor = discord.Color.blue()
+        # Definir cor do embed
         if self.operacao.lower() == "fuga":
             cor = discord.Color.orange()
         elif self.operacao.lower() == "tiro":
             cor = discord.Color.red()
+        else:
+            cor = discord.Color.blue()
 
         embed = discord.Embed(title=f"{self.tipo_acao} - {self.resultado}", color=cor)
         embed.add_field(name="🏷️ Tipo da Ação", value=self.tipo_acao, inline=True)
         embed.add_field(name="🛡️ Operação", value=self.operacao, inline=True)
-        embed.add_field(name="🗓️ Data e Hora", value=self.data_hora.value, inline=True)
+        embed.add_field(name="🗓️ Data e Hora", value=data_formatada, inline=True)
         embed.add_field(name="💰 Dinheiro", value=dinheiro_formatado, inline=True)
         embed.add_field(name="🏆 Resultado", value=self.resultado, inline=True)
 
@@ -66,6 +79,7 @@ class EditarAcaoModal(discord.ui.Modal, title="Editar Ação"):
         embed.set_footer(text=f"Editado por {interaction.user.display_name}")
         await self.mensagem.edit(embed=embed, view=EditarAcaoButton(0))
         await interaction.response.send_message("✅ Ação editada!", ephemeral=True)
+
 
 class EditarAcaoButton(discord.ui.View):
     def __init__(self, acao_id):
@@ -102,24 +116,6 @@ class EditarAcaoButton(discord.ui.View):
             ephemeral=True
         )
 
-import discord
-import sqlite3
-from datetime import datetime
-from discord.ext import commands
-from Views.kills import AdicionarKillsPorBotaoView, salvar_kill_callback
-
-ID_CANAL_ACOES = None  # Será definido via injeção no setup()
-
-TIPOS_ACAO = [
-    "Banco Central", "Banco Paleto", "Banco Fleeca", "Carro Forte",
-    "Joalheria", "Loja de Armas", "Loja de Departamento", "Distribuidora de Bebidas",
-    "Fuga", "Tiro"
-]
-RESULTADOS = ["Vitória", "Vitória Parcial", "Derrota"]
-
-# --- COMPONENTES (Views) ---
-
-# (demais classes mantidas)
 
 class EscolhaInicial(discord.ui.View):
     def __init__(self):
@@ -180,6 +176,7 @@ class EscolhaInicial(discord.ui.View):
 
         await interaction.response.send_modal(ActionModal(self.tipo_acao, self.resultado, self.operacao))
 
+
 class ActionModal(discord.ui.Modal, title="Registrar Ação"):
     def __init__(self, tipo_acao, resultado, operacao):
         super().__init__()
@@ -196,24 +193,42 @@ class ActionModal(discord.ui.Modal, title="Registrar Ação"):
 
     async def on_submit(self, interaction: discord.Interaction):
         try:
+            partes = self.data_hora.value.split(" -")
+            data_raw = partes[0] + " - " + partes[1]
+            dt = datetime.strptime(data_raw.strip(), "%d/%m/%Y - %H:%M")
+            data_formatada = dt.strftime("%d/%m/%Y - %H:%M")
+        except Exception as e:
+            await interaction.response.send_message(f"❌ Data e hora inválida: {e}", ephemeral=True)
+            return
+
+        try:
             dinheiro_formatado = f"R$ {int(self.dinheiro.value):,}".replace(",", ".")
         except ValueError:
             await interaction.response.send_message("❌ Dinheiro inválido.", ephemeral=True)
             return
 
-        from .participantes import PaginatedSelectView
-        await interaction.response.send_message(
-            "Selecione os participantes:",
-            view=PaginatedSelectView(
-                self.tipo_acao, self.resultado, self.operacao,
-                self.data_hora.value, dinheiro_formatado, interaction.guild
-            ),
-            ephemeral=True
-        )
+        if self.operacao.lower() == "fuga":
+            cor = discord.Color.orange()
+        elif self.operacao.lower() == "tiro":
+            cor = discord.Color.red()
+        else:
+            cor = discord.Color.blue()
+
+        embed = discord.Embed(title=f"{self.tipo_acao} - {self.resultado}", color=cor)
+        embed.add_field(name="🏷️ Tipo da Ação", value=self.tipo_acao, inline=True)
+        embed.add_field(name="🛡️ Operação", value=self.operacao, inline=True)
+        embed.add_field(name="🗓️ Data e Hora", value=data_formatada, inline=True)
+        embed.add_field(name="💰 Dinheiro", value=dinheiro_formatado, inline=True)
+        embed.add_field(name="🏆 Resultado", value=self.resultado, inline=True)
+
+        await enviar_acao_completa(interaction, embed, [], acao_id=0)
+        await interaction.response.send_message("✅ Ação registrada com sucesso.", ephemeral=True)
+
 
 async def enviar_acao_completa(interaction: discord.Interaction, embed: discord.Embed, participantes: list, acao_id: int):
     canal = interaction.guild.get_channel(ID_CANAL_ACOES)
     await canal.send(embed=embed, view=EditarAcaoButton(acao_id))
+
 
 def setup_views(bot: commands.Bot, canal_acoes_id: int):
     global ID_CANAL_ACOES

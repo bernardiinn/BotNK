@@ -19,11 +19,9 @@ class PaginatedSelectView(View):
         self.selected_members = set()
         self.total_pages = (len(guild.members) // self.members_per_page) + 1
 
-        logger.debug("[Init] PaginatedSelectView iniciada.")
         self.render_page()
 
     def render_page(self):
-        logger.debug(f"[Render] Página atual: {self.current_page}")
         self.clear_items()
 
         start = self.current_page * self.members_per_page
@@ -36,50 +34,37 @@ class PaginatedSelectView(View):
 
         async def select_callback(interaction: discord.Interaction):
             self.selected_members.update(select.values)
-            logger.debug(f"[Select] Selecionados até agora: {self.selected_members}")
             await interaction.response.defer()
 
         select.callback = select_callback
         self.add_item(select)
 
         if self.current_page > 0:
-            botao_anterior = Button(label="⬅️ Anterior", style=discord.ButtonStyle.primary)
-            async def anterior_callback(interaction: discord.Interaction):
-                logger.debug("[Botão] Anterior clicado")
-                self.current_page -= 1
-                self.render_page()
-                await interaction.response.edit_message(view=self)
-            botao_anterior.callback = anterior_callback
-            self.add_item(botao_anterior)
-
+            self.add_item(Button(label="⬅️ Anterior", style=discord.ButtonStyle.primary, custom_id="anterior"))
         if self.current_page < self.total_pages - 1:
-            botao_proxima = Button(label="Próxima ➡️", style=discord.ButtonStyle.primary)
-            async def proxima_callback(interaction: discord.Interaction):
-                logger.debug("[Botão] Próxima clicado")
-                self.current_page += 1
-                self.render_page()
-                await interaction.response.edit_message(view=self)
-            botao_proxima.callback = proxima_callback
-            self.add_item(botao_proxima)
+            self.add_item(Button(label="Próxima ➡️", style=discord.ButtonStyle.primary, custom_id="proxima"))
 
-        botao_confirmar = Button(label="✅ Confirmar Participantes", style=discord.ButtonStyle.success)
-        async def confirmar_callback(interaction: discord.Interaction):
-            logger.info("[Botão] Confirmar Participantes clicado")
-            participantes = [self.guild.get_member(int(uid)) for uid in self.selected_members]
-            participantes = [p for p in participantes if p]
-            logger.debug(f"[Confirmar] Participantes finais: {[p.display_name for p in participantes]}")
-            await self.salvar_acao(interaction, participantes)
-
-        botao_confirmar.callback = confirmar_callback
-        self.add_item(botao_confirmar)
+        self.add_item(Button(label="✅ Confirmar Participantes", style=discord.ButtonStyle.success, custom_id="confirmar"))
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        logger.debug("[Interação] interaction_check passou")
         return True
 
-    async def salvar_acao(self, interaction: discord.Interaction, participantes):
-        logger.info("[Salvar] Iniciando salvamento da ação...")
+    @discord.ui.button(label="", style=discord.ButtonStyle.secondary, custom_id="")
+    async def on_button_click(self, interaction: discord.Interaction):
+        custom_id = interaction.data['custom_id']
+        if custom_id == "anterior":
+            self.current_page -= 1
+        elif custom_id == "proxima":
+            self.current_page += 1
+        elif custom_id == "confirmar":
+            participantes = [self.guild.get_member(int(uid)) for uid in self.selected_members]
+            participantes = [p for p in participantes if p]
+            await self.salvar_acao(interaction, participantes)
+            return
+        self.render_page()
+        await interaction.response.edit_message(view=self)
 
+    async def salvar_acao(self, interaction: discord.Interaction, participantes):
         embed = discord.Embed(title=f"{self.tipo_acao} - {self.resultado}", color=discord.Color.green())
         embed.add_field(name="🏷️ Tipo da Ação", value=self.tipo_acao, inline=True)
         embed.add_field(name="🛡️ Operação", value=self.operacao, inline=True)
@@ -93,16 +78,27 @@ class PaginatedSelectView(View):
                 blocos.append(bloco)
                 bloco = ""
             bloco += f"{p.mention} "
-        if bloco: blocos.append(bloco)
+        if bloco:
+            blocos.append(bloco)
 
         for i, b in enumerate(blocos):
             embed.add_field(name=f"👥 Participantes ({i+1})", value=b.strip(), inline=False)
 
         participantes_str = " ".join([p.mention for p in participantes])
 
-        logger.debug("[Salvar] Inserindo no banco de dados relatorio.db...")
         conn = sqlite3.connect("relatorio.db")
         cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS acoes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                tipo_acao TEXT NOT NULL,
+                resultado TEXT NOT NULL,
+                operacao TEXT NOT NULL,
+                data_hora TEXT NOT NULL,
+                dinheiro TEXT NOT NULL,
+                participantes TEXT NOT NULL
+            )
+        """)
         cursor.execute("""
             INSERT INTO acoes (tipo_acao, resultado, operacao, data_hora, dinheiro, participantes)
             VALUES (?, ?, ?, ?, ?, ?)
@@ -110,14 +106,8 @@ class PaginatedSelectView(View):
         conn.commit()
         acao_id = cursor.lastrowid
         conn.close()
-        logger.info(f"[Salvar] Ação salva com sucesso. ID: {acao_id}")
 
-        logger.debug("[Salvar] Chamando enviar_acao_completa...")
+        logger.info(f"[DB] Ação registrada com sucesso: ID {acao_id}")
+
         await enviar_acao_completa(interaction, embed, participantes, acao_id)
-
-        try:
-            logger.debug("[Salvar] Respondendo interação...")
-            await interaction.response.send_message("✅ Ação registrada com sucesso!", ephemeral=True)
-        except discord.InteractionResponded:
-            logger.warning("[Salvar] Interação já respondida, usando followup...")
-            await interaction.followup.send("✅ Ação registrada com sucesso!", ephemeral=True)
+        await interaction.response.send_message("✅ Ação registrada com sucesso!", ephemeral=True)
