@@ -3,6 +3,25 @@ from discord.ui import View, Select, Button
 from discord import Interaction
 from utils.logger import logger
 
+class KillDropdown(Select):
+    def __init__(self, participante: discord.Member):
+        self.participante = participante
+        options = [
+            discord.SelectOption(label=str(i), value=str(i)) for i in range(11)
+        ]
+        super().__init__(
+            placeholder=f"{participante.display_name} - Kills",
+            options=options,
+            min_values=1,
+            max_values=1
+        )
+
+    async def callback(self, interaction: Interaction):
+        view: AdicionarKillsDropdownView = self.view
+        view.kills[str(self.participante.id)] = int(self.values[0])
+        logger.debug(f"[Kills] {self.participante.display_name} -> {self.values[0]}")
+        await interaction.response.defer()
+
 class AdicionarKillsDropdownView(View):
     def __init__(self, participantes, acao_id):
         super().__init__(timeout=300)
@@ -21,20 +40,7 @@ class AdicionarKillsDropdownView(View):
         current_participants = self.participantes[start:end]
 
         for p in current_participants:
-            select = Select(
-                placeholder=f"{p.display_name} - Kills",
-                options=[
-                    discord.SelectOption(label=str(i), value=str(i)) for i in range(11)
-                ]
-            )
-
-            async def callback(interaction: Interaction, user_id=str(p.id), dropdown=select):
-                self.kills[user_id] = int(dropdown.values[0])
-                logger.debug(f"[Kills] {user_id} -> {dropdown.values[0]}")
-                await interaction.response.defer()
-
-            select.callback = callback
-            self.add_item(select)
+            self.add_item(KillDropdown(p))
 
         if self.current_page > 0:
             botao_anterior = Button(label="⬅️ Anterior", style=discord.ButtonStyle.secondary)
@@ -57,7 +63,6 @@ class AdicionarKillsDropdownView(View):
         confirmar = Button(label="✅ Confirmar Kills", style=discord.ButtonStyle.success)
         async def confirmar_callback(interaction: Interaction):
             logger.info(f"[Kills] Confirmado: {self.kills}")
-            # Aqui você pode salvar no banco de dados se quiser
             await interaction.response.send_message("✅ Kills registradas com sucesso!", ephemeral=True)
         confirmar.callback = confirmar_callback
         self.add_item(confirmar)
