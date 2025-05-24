@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from Views.meta import get_total_farmado, VALOR_META_SEMANAL
 from mvp import calcular_top_mvp_vitorias
 from utils.logger import logger
+from utils.db import get_db_connection
 
 class RelatorioView(discord.ui.View):
     def __init__(self):
@@ -14,7 +15,7 @@ class RelatorioView(discord.ui.View):
         hoje = datetime.now()
         inicio_mes = hoje.replace(day=1)
 
-        conn = sqlite3.connect('relatorio.db')
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute('SELECT tipo_acao, resultado, operacao, data_hora, dinheiro, participantes FROM acoes')
         registros = c.fetchall()
@@ -52,7 +53,7 @@ class RelatorioView(discord.ui.View):
 
         acao_mais_comum = max(tipos_contagem, key=tipos_contagem.get) if tipos_contagem else "N/A"
         # Carregar kills do banco
-        conn = sqlite3.connect('relatorio.db')
+        conn = get_db_connection()
         c = conn.cursor()
         # Pegue todas as kills e filtre no Python
         c.execute("""
@@ -110,7 +111,7 @@ class RelatorioView(discord.ui.View):
         hoje = datetime.now()
         inicio_semana = (hoje - timedelta(days=hoje.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
 
-        conn = sqlite3.connect('relatorio.db')
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute('SELECT tipo_acao, resultado, operacao, data_hora, dinheiro, participantes FROM acoes')
         registros = c.fetchall()
@@ -148,7 +149,7 @@ class RelatorioView(discord.ui.View):
 
         acao_mais_comum = max(tipos_contagem, key=tipos_contagem.get) if tipos_contagem else "N/A"
 
-        conn = sqlite3.connect('relatorio.db')
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute("""
             SELECT k.membro_id, k.kills, a.data_hora
@@ -202,7 +203,7 @@ class RelatorioView(discord.ui.View):
 
     @discord.ui.button(label="👥 Relatório por Membro", style=discord.ButtonStyle.secondary, custom_id="relatorio_membro")
     async def relatorio_membro(self, interaction: discord.Interaction, button: discord.ui.Button):
-        conn = sqlite3.connect('relatorio.db')
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute('SELECT participantes FROM acoes')
         registros = c.fetchall()
@@ -224,7 +225,7 @@ class RelatorioView(discord.ui.View):
 
     @discord.ui.button(label="💸 Relatório de Metas", style=discord.ButtonStyle.success, custom_id="relatorio_metas")
     async def relatorio_metas(self, interaction: discord.Interaction, button: discord.ui.Button):
-        conn = sqlite3.connect('relatorio.db')
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute("SELECT DISTINCT membro_id FROM farm_droga")
         membros = [linha[0] for linha in c.fetchall()]
@@ -268,7 +269,7 @@ class MemberSelect(discord.ui.Select):
         hoje = datetime.now()
         inicio_semana = (hoje - timedelta(days=hoje.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
 
-        conn = sqlite3.connect('relatorio.db')
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute('SELECT tipo_acao, resultado, operacao, data_hora, dinheiro, participantes FROM acoes')
         registros = c.fetchall()
@@ -328,7 +329,7 @@ class MemberSelect(discord.ui.Select):
         embed.add_field(name="📅 Participações esta semana", value=str(total_semana), inline=True)
 
         # Buscar kills do membro
-        conn = sqlite3.connect('relatorio.db')
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute("SELECT SUM(kills) FROM kills WHERE membro_id = ?", (membro_id,))
         res = c.fetchone()

@@ -1,5 +1,6 @@
 # Views/meta.py
 import discord
+from utils.db import get_db_connection
 import sqlite3
 from datetime import datetime, timedelta
 
@@ -11,7 +12,7 @@ def get_inicio_semana():
 
 def get_total_farmado(membro_id):
     inicio = get_inicio_semana().strftime("%Y-%m-%d")
-    conn = sqlite3.connect('relatorio.db')
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute("""
         SELECT SUM(valor) FROM farm_droga
@@ -23,7 +24,7 @@ def get_total_farmado(membro_id):
 
 def registrar_farm(membro_id, valor):
     hoje = datetime.now().strftime("%Y-%m-%d")
-    conn = sqlite3.connect('relatorio.db')
+    conn = get_db_connection()
     c = conn.cursor()
     c.execute("""
         INSERT INTO farm_droga (membro_id, valor, data)

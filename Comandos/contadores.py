@@ -1,4 +1,5 @@
 from discord.ext import commands
+from utils.db import get_db_connection
 import sqlite3
 
 def setup(bot):
@@ -29,7 +30,7 @@ def setup(bot):
 
     @bot.command(name="marsola")
     async def marsola(ctx):
-        conn = sqlite3.connect('relatorio.db')
+        conn = get_db_connection()
         c = conn.cursor()
         nomes = ['magrao', 'bernardin', 'leon', 'jhon', 'texas']
         total = 0
@@ -42,7 +43,7 @@ def setup(bot):
         await ctx.send(f"🧠 Marsola foi {xingamentos} {total} vezes.")
 
     async def contar(ctx, nome, mensagem):
-        conn = sqlite3.connect('relatorio.db')
+        conn = get_db_connection()
         c = conn.cursor()
         c.execute("INSERT OR IGNORE INTO contadores (nome, valor) VALUES (?, 0)", (nome,))
         c.execute("UPDATE contadores SET valor = valor + 1 WHERE nome = ?", (nome,))
