@@ -33,6 +33,7 @@ class PaginatedSelectView(View):
 
         async def select_callback(interaction: discord.Interaction):
             self.selected_members.update(select.values)
+            print(f"[DEBUG] Participantes selecionados (parcial): {self.selected_members}")
             await interaction.response.defer()
 
         select.callback = select_callback
@@ -51,19 +52,26 @@ class PaginatedSelectView(View):
     @discord.ui.button(label="", style=discord.ButtonStyle.secondary, custom_id="")
     async def on_button_click(self, interaction: discord.Interaction):
         custom_id = interaction.data['custom_id']
+        print(f"[DEBUG] Botão clicado: {custom_id}")
+
         if custom_id == "anterior":
             self.current_page -= 1
         elif custom_id == "proxima":
             self.current_page += 1
         elif custom_id == "confirmar":
+            print("[DEBUG] Botão de confirmar participantes clicado.")
             participantes = [self.guild.get_member(int(uid)) for uid in self.selected_members]
             participantes = [p for p in participantes if p]
+            print(f"[DEBUG] Participantes finais: {[p.display_name for p in participantes]}")
             await self.salvar_acao(interaction, participantes)
             return
+
         self.render_page()
         await interaction.response.edit_message(view=self)
 
     async def salvar_acao(self, interaction: discord.Interaction, participantes):
+        print("[DEBUG] Iniciando salvamento da ação...")
+
         embed = discord.Embed(title=f"{self.tipo_acao} - {self.resultado}", color=discord.Color.green())
         embed.add_field(name="🏷️ Tipo da Ação", value=self.tipo_acao, inline=True)
         embed.add_field(name="🛡️ Operação", value=self.operacao, inline=True)
@@ -84,6 +92,7 @@ class PaginatedSelectView(View):
 
         participantes_str = " ".join([p.mention for p in participantes])
 
+        print("[DEBUG] Inserindo ação no banco de dados...")
         conn = sqlite3.connect("acoes.db")
         cursor = conn.cursor()
         cursor.execute("""
@@ -93,6 +102,13 @@ class PaginatedSelectView(View):
         conn.commit()
         acao_id = cursor.lastrowid
         conn.close()
+        print(f"[DEBUG] Ação salva com ID {acao_id}")
 
+        print("[DEBUG] Enviando embed e botão de adicionar kills...")
         await enviar_acao_completa(interaction, embed, participantes, acao_id)
-        await interaction.response.send_message("✅ Ação registrada com sucesso!", ephemeral=True)
+
+        print("[DEBUG] Respondendo interação de sucesso...")
+        try:
+            await interaction.response.send_message("✅ Ação registrada com sucesso!", ephemeral=True)
+        except discord.InteractionResponded:
+            await interaction.followup.send("✅ Ação registrada com sucesso!", ephemeral=True)
