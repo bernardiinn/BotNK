@@ -81,3 +81,17 @@ def setup(bot):
             await ctx.send("✅ Banco de dados restaurado com sucesso a partir do backup!")
         except Exception as e:
             await ctx.send(f"❌ Erro ao restaurar o banco: `{e}`")
+    
+    @bot.command(name="ls")
+    async def listar_arquivos(ctx):
+        try:
+            arquivos = os.listdir(".")
+            if not arquivos:
+                await ctx.send("📂 Nenhum arquivo encontrado no diretório atual.")
+                return
+
+            lista_formatada = "\n".join(f"• `{nome}`" for nome in arquivos)
+            await ctx.send(f"📁 **Arquivos em `/app`:**\n{lista_formatada[:2000]}")
+
+        except Exception as e:
+            await ctx.send(f"❌ Erro ao listar arquivos: `{e}`")
