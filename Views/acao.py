@@ -99,18 +99,21 @@ class EscolhaInicial(discord.ui.View):
             options=[discord.SelectOption(label=tipo) for tipo in TIPOS_ACAO],
             custom_id="select_tipo_acao"
         )
+        self.tipo_select.callback = self.set_tipo
 
         self.resultado_select = discord.ui.Select(
             placeholder="Escolha o Resultado",
             options=[discord.SelectOption(label=res) for res in RESULTADOS],
             custom_id="select_resultado"
         )
+        self.resultado_select.callback = self.set_resultado
 
         self.operacao_select = discord.ui.Select(
             placeholder="Escolha a Operação",
             options=[discord.SelectOption(label=o) for o in ["Fuga", "Tiro"]],
             custom_id="select_operacao"
         )
+        self.operacao_select.callback = self.set_operacao
 
         self.confirmar_button = discord.ui.Button(
             label="Confirmar",
@@ -124,16 +127,31 @@ class EscolhaInicial(discord.ui.View):
         self.add_item(self.operacao_select)
         self.add_item(self.confirmar_button)
 
-    async def set_tipo(self, interaction: discord.Interaction): self.tipo_acao = self.tipo_select.values[0]; await interaction.response.defer()
-    async def set_resultado(self, interaction: discord.Interaction): self.resultado = self.resultado_select.values[0]; await interaction.response.defer()
-    async def set_operacao(self, interaction: discord.Interaction): self.operacao = self.operacao_select.values[0]; await interaction.response.defer()
+    async def set_tipo(self, interaction: discord.Interaction):
+        self.tipo_acao = self.tipo_select.values[0]
+        print(f"[DEBUG] Tipo da ação selecionado: {self.tipo_acao}")
+        await interaction.response.defer()
+
+    async def set_resultado(self, interaction: discord.Interaction):
+        self.resultado = self.resultado_select.values[0]
+        print(f"[DEBUG] Resultado selecionado: {self.resultado}")
+        await interaction.response.defer()
+
+    async def set_operacao(self, interaction: discord.Interaction):
+        self.operacao = self.operacao_select.values[0]
+        print(f"[DEBUG] Operação selecionada: {self.operacao}")
+        await interaction.response.defer()
 
     async def confirmar(self, interaction: discord.Interaction):
+        print("[DEBUG] Botão Confirmar clicado.")
         if not all([self.tipo_acao, self.resultado, self.operacao]):
+            print("[ERRO] Campos incompletos ao confirmar.")
             await interaction.response.send_message("Selecione todos os campos.", ephemeral=True)
             return
 
+        print(f"[DEBUG] Abrindo modal com {self.tipo_acao}, {self.resultado}, {self.operacao}")
         await interaction.response.send_modal(ActionModal(self.tipo_acao, self.resultado, self.operacao))
+
 
 class ActionModal(discord.ui.Modal, title="Registrar Ação"):
     def __init__(self, tipo_acao, resultado, operacao):
@@ -153,12 +171,14 @@ class ActionModal(discord.ui.Modal, title="Registrar Ação"):
         try:
             dinheiro_formatado = f"R$ {int(self.dinheiro.value):,}".replace(",", ".")
         except ValueError:
+            print("[ERRO] Dinheiro inválido.")
             await interaction.response.send_message("❌ Dinheiro inválido.", ephemeral=True)
             return
 
+        print(f"[DEBUG] Modal enviado: {self.tipo_acao}, {self.resultado}, {self.operacao}, {dinheiro_formatado}")
         from .participantes import PaginatedSelectView
         await interaction.response.send_message(
-            "Selecione os participantes:", 
+            "Selecione os participantes:",
             view=PaginatedSelectView(
                 self.tipo_acao, self.resultado, self.operacao,
                 self.data_hora.value, dinheiro_formatado, interaction.guild
@@ -166,7 +186,9 @@ class ActionModal(discord.ui.Modal, title="Registrar Ação"):
             ephemeral=True
         )
 
+
 async def enviar_acao_completa(interaction: discord.Interaction, embed: discord.Embed, participantes: list, acao_id: int):
+    print(f"[DEBUG] Enviando ação ID {acao_id} com {len(participantes)} participantes.")
     canal = interaction.guild.get_channel(ID_CANAL_ACOES)
     mensagem = await canal.send(embed=embed, view=EditarAcaoButton(acao_id))
 
@@ -178,6 +200,7 @@ async def enviar_acao_completa(interaction: discord.Interaction, embed: discord.
 
         @discord.ui.button(label="Adicionar Kills", style=discord.ButtonStyle.primary)
         async def adicionar_kills(self, interaction: discord.Interaction, button: discord.ui.Button):
+            print(f"[DEBUG] Botão de adicionar kills clicado para ação {self.acao_id}")
             view = AdicionarKillsDropdownView(self.participantes, self.acao_id)
             await interaction.response.send_message("Adicione os kills:", view=view, ephemeral=True)
 
