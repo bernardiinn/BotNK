@@ -2,6 +2,7 @@ import os
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
+import shutil
 
 from utils.logger import setup_logging
 logger = setup_logging()
@@ -39,6 +40,11 @@ async def on_ready():
     logger.info(f"✅ Bot online como {bot.user}")
     logger.info(f"📁 Diretório de trabalho: {os.getcwd()}")
     logger.info(f"📄 Caminho do banco: {os.path.abspath('relatorio.db')}")
+    
+    # Restaurar relatorio.db a partir de relatorio_backup.db se estiver ausente ou corrompido
+    if not os.path.exists("relatorio.db") or os.path.getsize("relatorio.db") < 10000:
+        shutil.copyfile("relatorio_backup.db", "relatorio.db")
+        logger.warning("🔁 Banco restaurado automaticamente a partir de relatorio_backup.db")
 
     # Criar tabelas no banco
     criar_tabelas()
