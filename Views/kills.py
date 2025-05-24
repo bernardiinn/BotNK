@@ -2,6 +2,7 @@ import discord
 from discord.ui import View, Button, Modal, TextInput
 from discord import Interaction
 from utils.logger import logger
+import sqlite3
 
 class KillsPorParticipanteModal(Modal):
     def __init__(self, participante: discord.Member, acao_id: int, salvar_callback):
@@ -43,3 +44,31 @@ class AdicionarKillsPorBotaoView(View):
 
             button.callback = callback
             self.add_item(button)
+
+async def salvar_kill_callback(interaction: Interaction, participante: discord.Member, acao_id: int, kills: int):
+    logger.info(f"[DB] Salvando kills: Ação {acao_id}, {participante.display_name}, {kills} kills")
+
+    conn = sqlite3.connect("relatorio.db")
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS kills (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            acao_id INTEGER NOT NULL,
+            user_id TEXT NOT NULL,
+            kills INTEGER NOT NULL
+        )
+    """)
+
+    cursor.execute("""
+        INSERT INTO kills (acao_id, user_id, kills)
+        VALUES (?, ?, ?)
+    """, (acao_id, str(participante.id), kills))
+
+    conn.commit()
+    conn.close()
+
+    logger.info(f"[DB] Kills salvas para {participante.display_name}")
+    await interaction.followup.send(
+        f"✅ Kills salvas para {participante.display_name}: {kills}", ephemeral=True
+    )
