@@ -28,7 +28,7 @@ def setup(bot):
         mensagem = "**⚠️ Espero que você *sucumba!* ⚠️**"
         await ctx.send(mensagem)
 
-    @bot.command(name="marsola")
+    @bot.command(name="marsela")
     async def marsola(ctx):
         conn = get_db_connection()
         c = conn.cursor()
