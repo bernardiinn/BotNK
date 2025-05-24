@@ -100,8 +100,8 @@ class PaginatedSelectView(View):
 
         participantes_str = " ".join([p.mention for p in participantes])
 
-        logger.debug("[Salvar] Inserindo no banco de dados...")
-        conn = sqlite3.connect("acoes.db")
+        logger.debug("[Salvar] Inserindo no banco de dados relatorio.db...")
+        conn = sqlite3.connect("relatorio.db")
         cursor = conn.cursor()
         cursor.execute("""
             INSERT INTO acoes (tipo_acao, resultado, operacao, data_hora, dinheiro, participantes)
