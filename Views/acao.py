@@ -2,6 +2,7 @@ import discord
 import sqlite3
 from datetime import datetime
 from discord.ext import commands
+from Views.kills import AdicionarKillsDropdownView
 
 ID_CANAL_ACOES = None  # Será definido via injeção no setup()
 
@@ -49,7 +50,6 @@ class EditarAcaoModal(discord.ui.Modal, title="Editar Ação"):
         embed.add_field(name="💰 Dinheiro", value=dinheiro_formatado, inline=True)
         embed.add_field(name="🏆 Resultado", value=self.resultado, inline=True)
 
-        # Participantes
         participantes_lista = self.participantes.split()
         bloco, blocos = "", []
         for p in participantes_lista:
@@ -63,7 +63,7 @@ class EditarAcaoModal(discord.ui.Modal, title="Editar Ação"):
             embed.add_field(name=f"👥 Participantes ({i+1})", value=b.strip(), inline=False)
 
         embed.set_footer(text=f"Editado por {interaction.user.display_name}")
-        await self.mensagem.edit(embed=embed, view=EditarAcaoButton(0))  # 0 = placeholder
+        await self.mensagem.edit(embed=embed, view=EditarAcaoButton(0))
         await interaction.response.send_message("✅ Ação editada!", ephemeral=True)
 
 class EditarAcaoButton(discord.ui.View):
@@ -97,25 +97,25 @@ class EscolhaInicial(discord.ui.View):
         self.tipo_select = discord.ui.Select(
             placeholder="Escolha o Tipo de Ação",
             options=[discord.SelectOption(label=tipo) for tipo in TIPOS_ACAO],
-            custom_id="select_tipo_acao"  # ✅ Adicione isso
+            custom_id="select_tipo_acao"
         )
 
         self.resultado_select = discord.ui.Select(
             placeholder="Escolha o Resultado",
             options=[discord.SelectOption(label=res) for res in RESULTADOS],
-            custom_id="select_resultado"  # ✅ Adicione isso
+            custom_id="select_resultado"
         )
 
         self.operacao_select = discord.ui.Select(
             placeholder="Escolha a Operação",
             options=[discord.SelectOption(label=o) for o in ["Fuga", "Tiro"]],
-            custom_id="select_operacao"  # ✅ Adicione isso
+            custom_id="select_operacao"
         )
 
         self.confirmar_button = discord.ui.Button(
             label="Confirmar",
             style=discord.ButtonStyle.success,
-            custom_id="botao_confirmar_acao"  # ✅ correto
+            custom_id="botao_confirmar_acao"
         )
         self.confirmar_button.callback = self.confirmar
 
@@ -123,7 +123,6 @@ class EscolhaInicial(discord.ui.View):
         self.add_item(self.resultado_select)
         self.add_item(self.operacao_select)
         self.add_item(self.confirmar_button)
-
 
     async def set_tipo(self, interaction: discord.Interaction): self.tipo_acao = self.tipo_select.values[0]; await interaction.response.defer()
     async def set_resultado(self, interaction: discord.Interaction): self.resultado = self.resultado_select.values[0]; await interaction.response.defer()
@@ -167,9 +166,24 @@ class ActionModal(discord.ui.Modal, title="Registrar Ação"):
             ephemeral=True
         )
 
-# ---
+async def enviar_acao_completa(interaction: discord.Interaction, embed: discord.Embed, participantes: list, acao_id: int):
+    canal = interaction.guild.get_channel(ID_CANAL_ACOES)
+    mensagem = await canal.send(embed=embed, view=EditarAcaoButton(acao_id))
+
+    class BotaoAdicionarKills(discord.ui.View):
+        def __init__(self, participantes, acao_id):
+            super().__init__(timeout=None)
+            self.participantes = participantes
+            self.acao_id = acao_id
+
+        @discord.ui.button(label="Adicionar Kills", style=discord.ButtonStyle.primary)
+        async def adicionar_kills(self, interaction: discord.Interaction, button: discord.ui.Button):
+            view = AdicionarKillsDropdownView(self.participantes, self.acao_id)
+            await interaction.response.send_message("Adicione os kills:", view=view, ephemeral=True)
+
+    await canal.send(view=BotaoAdicionarKills(participantes, acao_id))
 
 def setup_views(bot: commands.Bot, canal_acoes_id: int):
     global ID_CANAL_ACOES
     ID_CANAL_ACOES = canal_acoes_id
-    bot.add_view(EscolhaInicial())  # Se quiser registrar views permanentes
+    bot.add_view(EscolhaInicial())

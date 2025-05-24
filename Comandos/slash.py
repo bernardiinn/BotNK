@@ -3,11 +3,11 @@ from discord import app_commands
 from discord.ext import commands
 from relatorio import RelatorioView
 from Views.meta import MetaModal, gerar_embed, MetaView
+from Views.acao import EscolhaInicial
 
 def setup(bot: commands.Bot):
     @bot.tree.command(name="registrar_acao", description="Registrar uma ação da facção.")
     async def registrar_acao(interaction: discord.Interaction):
-        from Views.acao import EscolhaInicial
         await interaction.response.send_message("Escolha o Tipo da Ação, Resultado e Tipo de Operação:", view=EscolhaInicial(), ephemeral=True)
 
     @bot.tree.command(name="registrar_meta", description="Registrar uma entrega de meta.")
@@ -38,8 +38,7 @@ def setup(bot: commands.Bot):
                         mensagens_debug.append(f"❌ Falha ao deletar ID {msg.id}: {e}")
 
         embed = gerar_embed(membro_id, membro_nome)
-        mensagem = await canal.send(embed=embed)
-        await mensagem.edit(view=MetaView(membro_id, membro_nome, mensagem))
+        await canal.send(embed=embed, view=MetaView())
 
         log = "\n".join(mensagens_debug) or "Nenhuma mensagem encontrada."
         await interaction.response.send_message(
