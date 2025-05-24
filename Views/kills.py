@@ -1,67 +1,63 @@
 import discord
 from discord.ui import View, Select, Button
-
-MAX_COMPONENTS_PER_PAGE = 5
-
-class KillDropdown(Select):
-    def __init__(self, user):
-        options = [
-            discord.SelectOption(label=str(i), value=str(i)) for i in range(0, 11)
-        ]
-        super().__init__(
-            placeholder=f"Kills de {user.display_name}",
-            min_values=1,
-            max_values=1,
-            options=options
-        )
-        self.user_id = user.id
-
-    async def callback(self, interaction: discord.Interaction):
-        view: AdicionarKillsDropdownView = self.view
-        view.kills[str(self.user_id)] = int(self.values[0])
-        await interaction.response.defer()
+from discord import Interaction
+from utils.logger import logger
 
 class AdicionarKillsDropdownView(View):
     def __init__(self, participantes, acao_id):
         super().__init__(timeout=300)
         self.participantes = participantes
         self.acao_id = acao_id
-        self.page = 0
-        self.kills = {}
-        self.total_pages = (len(participantes) + MAX_COMPONENTS_PER_PAGE - 1) // MAX_COMPONENTS_PER_PAGE
+        self.kills = {str(p.id): 0 for p in participantes}
+        self.current_page = 0
+        self.per_page = 5
+        logger.info("[Kills] View inicializada")
         self.render_page()
 
     def render_page(self):
         self.clear_items()
-        start = self.page * MAX_COMPONENTS_PER_PAGE
-        end = start + MAX_COMPONENTS_PER_PAGE
-        for membro in self.participantes[start:end]:
-            self.add_item(KillDropdown(membro))
+        start = self.current_page * self.per_page
+        end = start + self.per_page
+        current_participants = self.participantes[start:end]
 
-        if self.page > 0:
-            self.add_item(Button(label="⬅️ Anterior", style=discord.ButtonStyle.primary, custom_id="anterior"))
-        if self.page < self.total_pages - 1:
-            self.add_item(Button(label="Próxima ➡️", style=discord.ButtonStyle.primary, custom_id="proxima"))
+        for p in current_participants:
+            select = Select(
+                placeholder=f"{p.display_name} - Kills",
+                options=[
+                    discord.SelectOption(label=str(i), value=str(i)) for i in range(11)
+                ]
+            )
 
-        self.add_item(Button(label="✅ Confirmar Kills", style=discord.ButtonStyle.success, custom_id="confirmar"))
+            async def callback(interaction: Interaction, user_id=str(p.id), dropdown=select):
+                self.kills[user_id] = int(dropdown.values[0])
+                logger.debug(f"[Kills] {user_id} -> {dropdown.values[0]}")
+                await interaction.response.defer()
 
-    async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        return True  # Permitir que qualquer um interaja. Pode-se restringir por autor se desejar.
+            select.callback = callback
+            self.add_item(select)
 
-    @discord.ui.button(label="", style=discord.ButtonStyle.secondary, custom_id="")
-    async def on_button_click(self, interaction: discord.Interaction):
-        custom_id = interaction.data['custom_id']
-        if custom_id == "anterior":
-            self.page -= 1
-        elif custom_id == "proxima":
-            self.page += 1
-        elif custom_id == "confirmar":
-            await interaction.response.send_message(f"Kills registradas: {self.kills}", ephemeral=True)
-            self.stop()
-            return
-        self.render_page()
-        await interaction.response.edit_message(view=self)
+        if self.current_page > 0:
+            botao_anterior = Button(label="⬅️ Anterior", style=discord.ButtonStyle.secondary)
+            async def anterior_callback(interaction: Interaction):
+                self.current_page -= 1
+                self.render_page()
+                await interaction.response.edit_message(view=self)
+            botao_anterior.callback = anterior_callback
+            self.add_item(botao_anterior)
 
-# Exemplo de uso no bot ao registrar a ação:
-# view = AdicionarKillsDropdownView(participantes, acao_id)
-# await canal.send("Adicione os kills de cada membro:", view=view)
+        if end < len(self.participantes):
+            botao_proxima = Button(label="Próxima ➡️", style=discord.ButtonStyle.secondary)
+            async def proxima_callback(interaction: Interaction):
+                self.current_page += 1
+                self.render_page()
+                await interaction.response.edit_message(view=self)
+            botao_proxima.callback = proxima_callback
+            self.add_item(botao_proxima)
+
+        confirmar = Button(label="✅ Confirmar Kills", style=discord.ButtonStyle.success)
+        async def confirmar_callback(interaction: Interaction):
+            logger.info(f"[Kills] Confirmado: {self.kills}")
+            # Aqui você pode salvar no banco de dados se quiser
+            await interaction.response.send_message("✅ Kills registradas com sucesso!", ephemeral=True)
+        confirmar.callback = confirmar_callback
+        self.add_item(confirmar)
