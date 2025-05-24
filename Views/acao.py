@@ -102,6 +102,25 @@ class EditarAcaoButton(discord.ui.View):
             ephemeral=True
         )
 
+import discord
+import sqlite3
+from datetime import datetime
+from discord.ext import commands
+from Views.kills import AdicionarKillsPorBotaoView, salvar_kill_callback
+
+ID_CANAL_ACOES = None  # Será definido via injeção no setup()
+
+TIPOS_ACAO = [
+    "Banco Central", "Banco Paleto", "Banco Fleeca", "Carro Forte",
+    "Joalheria", "Loja de Armas", "Loja de Departamento", "Distribuidora de Bebidas",
+    "Fuga", "Tiro"
+]
+RESULTADOS = ["Vitória", "Vitória Parcial", "Derrota"]
+
+# --- COMPONENTES (Views) ---
+
+# (demais classes mantidas)
+
 class EscolhaInicial(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
@@ -111,25 +130,29 @@ class EscolhaInicial(discord.ui.View):
 
         self.tipo_select = discord.ui.Select(
             placeholder="Escolha o Tipo de Ação",
-            options=[discord.SelectOption(label=tipo) for tipo in TIPOS_ACAO]
+            options=[discord.SelectOption(label=tipo) for tipo in TIPOS_ACAO],
+            custom_id="select_tipo_acao"
         )
         self.tipo_select.callback = self.set_tipo
 
         self.resultado_select = discord.ui.Select(
             placeholder="Escolha o Resultado",
-            options=[discord.SelectOption(label=res) for res in RESULTADOS]
+            options=[discord.SelectOption(label=res) for res in RESULTADOS],
+            custom_id="select_resultado"
         )
         self.resultado_select.callback = self.set_resultado
 
         self.operacao_select = discord.ui.Select(
             placeholder="Escolha a Operação",
-            options=[discord.SelectOption(label=o) for o in ["Fuga", "Tiro"]]
+            options=[discord.SelectOption(label=o) for o in ["Fuga", "Tiro"]],
+            custom_id="select_operacao"
         )
         self.operacao_select.callback = self.set_operacao
 
         self.confirmar_button = discord.ui.Button(
             label="Confirmar",
-            style=discord.ButtonStyle.success
+            style=discord.ButtonStyle.success,
+            custom_id="botao_confirmar_acao"
         )
         self.confirmar_button.callback = self.confirmar
 
