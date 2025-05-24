@@ -2,7 +2,7 @@ import discord
 import sqlite3
 from datetime import datetime
 from discord.ext import commands
-from Views.kills import AdicionarKillsDropdownView
+from Views.kills import AdicionarKillsPorBotaoView, salvar_kill_callback
 
 ID_CANAL_ACOES = None  # Será definido via injeção no setup()
 
@@ -188,23 +188,13 @@ class ActionModal(discord.ui.Modal, title="Registrar Ação"):
 
 
 async def enviar_acao_completa(interaction: discord.Interaction, embed: discord.Embed, participantes: list, acao_id: int):
-    print(f"[DEBUG] Enviando ação ID {acao_id} com {len(participantes)} participantes.")
     canal = interaction.guild.get_channel(ID_CANAL_ACOES)
     mensagem = await canal.send(embed=embed, view=EditarAcaoButton(acao_id))
 
-    class BotaoAdicionarKills(discord.ui.View):
-        def __init__(self, participantes, acao_id):
-            super().__init__(timeout=None)
-            self.participantes = participantes
-            self.acao_id = acao_id
-
-        @discord.ui.button(label="Adicionar Kills", style=discord.ButtonStyle.primary)
-        async def adicionar_kills(self, interaction: discord.Interaction, button: discord.ui.Button):
-            print(f"[DEBUG] Botão de adicionar kills clicado para ação {self.acao_id}")
-            view = AdicionarKillsDropdownView(self.participantes, self.acao_id)
-            await interaction.response.send_message("Adicione os kills:", view=view, ephemeral=True)
-
-    await canal.send(view=BotaoAdicionarKills(participantes, acao_id))
+    # Usar o novo sistema de registro de kills com botões e modais
+    await canal.send(
+        view=AdicionarKillsPorBotaoView(participantes, acao_id, salvar_kill_callback)
+    )
 
 def setup_views(bot: commands.Bot, canal_acoes_id: int):
     global ID_CANAL_ACOES
