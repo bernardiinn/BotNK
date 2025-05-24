@@ -48,7 +48,7 @@ class AdicionarKillsPorBotaoView(View):
 async def salvar_kill_callback(interaction: Interaction, participante: discord.Member, acao_id: int, kills: int):
     logger.info(f"[DB] Salvando kills: Ação {acao_id}, {participante.display_name}, {kills} kills")
 
-    conn = sqlite3.connect("relatorio.db")
+    conn = sqlite3.connect("/data/relatorio.db")
     cursor = conn.cursor()
 
     cursor.execute("""

@@ -86,7 +86,7 @@ class PaginatedSelectView(View):
 
         participantes_str = " ".join([p.mention for p in participantes])
 
-        conn = sqlite3.connect("relatorio.db")
+        conn = sqlite3.connect("/data/relatorio.db")
         cursor = conn.cursor()
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS acoes (
