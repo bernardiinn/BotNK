@@ -4,6 +4,8 @@ from discord.ext import commands
 from relatorio import RelatorioView
 from Views.meta import MetaModal, gerar_embed, MetaView
 from Views.acao import EscolhaInicial
+import logging
+from utils.Logger import logger
 
 def setup(bot: commands.Bot):
     @bot.tree.command(name="registrar_acao", description="Registrar uma ação da facção.")
@@ -31,23 +33,26 @@ def setup(bot: commands.Bot):
             mensagens_debug = []
 
             async for msg in canal.history(limit=50):
-                if msg.author == bot.user:
-                    mensagens_debug.append(f"ID: {msg.id} | Embeds: {len(msg.embeds)}")
-                    if msg.embeds:
-                        try:
-                            await msg.delete()
-                            deletadas += 1
-                        except Exception as e:
-                            mensagens_debug.append(f"❌ Falha ao deletar ID {msg.id}: {e}")
+                if msg.author == bot.user and msg.embeds:
+                    try:
+                        await msg.delete()
+                        deletadas += 1
+                        mensagens_debug.append(f"🗑️ Deletada: {msg.id}")
+                    except Exception as e:
+                        mensagens_debug.append(f"❌ Erro ao deletar {msg.id}: {e}")
 
             embed = gerar_embed(membro_id, membro_nome)
-            await canal.send(embed=embed, view=MetaView())
+
+            mensagem = await canal.send(embed=embed)  # envia embed sozinho
+            await mensagem.edit(view=MetaView(membro_id, membro_nome, mensagem))  # adiciona a View com a referência correta
 
             log = "\n".join(mensagens_debug) or "Nenhuma mensagem encontrada."
             await interaction.followup.send(
-                content=f"✅ Painel da meta criado!\n🧹 Mensagens antigas apagadas: {deletadas}\n📜 Debug:\n```{log}```",
+                content=f"✅ Painel da meta criado!\n🧹 Mensagens apagadas: {deletadas}\n📜 Debug:\n```{log}```",
                 ephemeral=True
             )
+
         except Exception as e:
             logger.error(f"[iniciar_meta] Erro inesperado: {e}", exc_info=True)
             await interaction.followup.send("❌ Ocorreu um erro ao criar o painel da meta.", ephemeral=True)
+            
