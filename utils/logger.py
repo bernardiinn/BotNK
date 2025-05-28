@@ -31,10 +31,19 @@ class DiscordDMHandler(logging.Handler):
 
     def emit(self, record):
         try:
-            msg = self.format(record)
-            tipo = record.levelname
-            mensagem_final = f"📩 **{tipo} Log**\n```{msg}```"
-            coro = self.bot.loop.create_task(self.enviar_dm(self.user_id, mensagem_final))
+            if record.levelno >= logging.INFO:
+                emoji = {
+                    "INFO": "ℹ️",
+                    "WARNING": "⚠️",
+                    "ERROR": "❌",
+                    "CRITICAL": "🔥",
+                    "DEBUG": "🐞"
+                }.get(record.levelname, "📩")
+
+                msg = self.format(record)
+                mensagem_final = f"**{emoji} {record.levelname}**\n```\n{msg}\n```"
+
+                coro = self.bot.loop.create_task(self.enviar_dm(self.user_id, mensagem_final))
         except Exception as e:
             print(f"[DiscordDMHandler] Falha ao emitir: {e}")
 
