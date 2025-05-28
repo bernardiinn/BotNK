@@ -42,6 +42,25 @@ def setup(bot):
         xingamentos = "Burro, Lerdão, Kitty, Doidao, Lesado, Otário, Carente, Pederasta, Desnecessário"
         await ctx.send(f"🧠 Marsola foi {xingamentos} {total} vezes.")
 
+    @bot.command(name="editarcontador")
+    async def editar_contador(ctx, nome: str, valor: int):
+        if not ctx.author.guild_permissions.administrator:
+            await ctx.send("❌ Você não tem permissão para usar esse comando.")
+            return
+
+        try:
+            conn = get_db_connection()
+            c = conn.cursor()
+            c.execute("UPDATE contadores SET valor = ? WHERE nome = ?", (valor, nome))
+            if c.rowcount == 0:
+                await ctx.send(f"⚠️ Contador '{nome}' não encontrado.")
+            else:
+                conn.commit()
+                await ctx.send(f"✅ Contador `{nome}` atualizado para `{valor}`.")
+            conn.close()
+        except Exception as e:
+            await ctx.send(f"❌ Erro ao editar contador: `{e}`")
+
     async def contar(ctx, nome, mensagem):
         conn = get_db_connection()
         c = conn.cursor()
