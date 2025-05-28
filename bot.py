@@ -22,6 +22,13 @@ intents.members = True
 # Inicialização do bot
 bot = commands.Bot(command_prefix="!", intents=intents)
 
+async def enviar_dm_erro(usuario_id: int, mensagem: str):
+    try:
+        user = await bot.fetch_user(usuario_id)
+        await user.send(f"❌ **Erro detectado no bot:**\n```{mensagem}```")
+    except Exception as e:
+        logger.warning(f"[ERRO_DM] Falha ao enviar DM: {e}")
+
 from utils.logger import DiscordDMHandler
 
 # Substitua com seu ID real
@@ -99,14 +106,6 @@ async def on_ready():
 
         # Enviar os botões
         await canal_relatorio.send(view=RelatorioView())
-
-async def enviar_dm_erro(usuario_id: int, mensagem: str):
-    try:
-        user = await bot.fetch_user(usuario_id)
-        await user.send(f"❌ **Erro detectado no bot:**\n```{mensagem}```")
-    except Exception as e:
-        logger.warning(f"[ERRO_DM] Falha ao enviar DM: {e}")
-
 
 bot.run(TOKEN)
 #trigger redeploy
