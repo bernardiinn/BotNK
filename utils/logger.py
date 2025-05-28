@@ -24,7 +24,7 @@ def setup_logging(level=logging.INFO) -> logging.Logger:
 
 class DiscordDMHandler(logging.Handler):
     def __init__(self, bot, user_id, enviar_dm_func):
-        super().__init__(level=logging.ERROR)
+        super().__init__(level=logging.NOTSET)
         self.bot = bot
         self.user_id = user_id
         self.enviar_dm = enviar_dm_func
@@ -32,7 +32,9 @@ class DiscordDMHandler(logging.Handler):
     def emit(self, record):
         try:
             msg = self.format(record)
-            coro = self.bot.loop.create_task(self.enviar_dm(self.user_id, msg))
+            tipo = record.levelname
+            mensagem_final = f"📩 **{tipo} Log**\n```{msg}```"
+            coro = self.bot.loop.create_task(self.enviar_dm(self.user_id, mensagem_final))
         except Exception as e:
             print(f"[DiscordDMHandler] Falha ao emitir: {e}")
 
