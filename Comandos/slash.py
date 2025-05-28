@@ -20,28 +20,34 @@ def setup(bot: commands.Bot):
 
     @bot.tree.command(name="iniciar_meta", description="Criar painel de farm semanal neste canal.")
     async def iniciar_meta(interaction: discord.Interaction):
-        membro_id = str(interaction.user.id)
-        membro_nome = interaction.user.display_name
+        await interaction.response.defer(ephemeral=True, thinking=True)
 
-        canal = interaction.channel
-        deletadas = 0
-        mensagens_debug = []
+        try:
+            membro_id = str(interaction.user.id)
+            membro_nome = interaction.user.display_name
 
-        async for msg in canal.history(limit=50):
-            if msg.author == bot.user:
-                mensagens_debug.append(f"ID: {msg.id} | Embeds: {len(msg.embeds)}")
-                if msg.embeds:
-                    try:
-                        await msg.delete()
-                        deletadas += 1
-                    except Exception as e:
-                        mensagens_debug.append(f"❌ Falha ao deletar ID {msg.id}: {e}")
+            canal = interaction.channel
+            deletadas = 0
+            mensagens_debug = []
 
-        embed = gerar_embed(membro_id, membro_nome)
-        await canal.send(embed=embed, view=MetaView())
+            async for msg in canal.history(limit=50):
+                if msg.author == bot.user:
+                    mensagens_debug.append(f"ID: {msg.id} | Embeds: {len(msg.embeds)}")
+                    if msg.embeds:
+                        try:
+                            await msg.delete()
+                            deletadas += 1
+                        except Exception as e:
+                            mensagens_debug.append(f"❌ Falha ao deletar ID {msg.id}: {e}")
 
-        log = "\n".join(mensagens_debug) or "Nenhuma mensagem encontrada."
-        await interaction.response.send_message(
-            content=f"✅ Painel da meta criado!\n🧹 Mensagens antigas apagadas: {deletadas}\n📜 Debug:\n```{log}```",
-            ephemeral=True
-        )
+            embed = gerar_embed(membro_id, membro_nome)
+            await canal.send(embed=embed, view=MetaView())
+
+            log = "\n".join(mensagens_debug) or "Nenhuma mensagem encontrada."
+            await interaction.followup.send(
+                content=f"✅ Painel da meta criado!\n🧹 Mensagens antigas apagadas: {deletadas}\n📜 Debug:\n```{log}```",
+                ephemeral=True
+            )
+        except Exception as e:
+            logger.error(f"[iniciar_meta] Erro inesperado: {e}", exc_info=True)
+            await interaction.followup.send("❌ Ocorreu um erro ao criar o painel da meta.", ephemeral=True)
