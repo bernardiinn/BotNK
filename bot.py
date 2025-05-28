@@ -22,6 +22,15 @@ intents.members = True
 # Inicialização do bot
 bot = commands.Bot(command_prefix="!", intents=intents)
 
+from utils.logger import DiscordDMHandler
+
+# Substitua com seu ID real
+ADMIN_ID = 419231481412452352
+
+dm_handler = DiscordDMHandler(bot, ADMIN_ID, enviar_dm_erro)
+dm_handler.setFormatter(logging.Formatter("%(asctime)s | %(levelname)s | %(message)s"))
+logger.addHandler(dm_handler)
+
 # Imports dos módulos
 from Comandos import contadores, slash, debug
 from Views.acao import setup_views as setup_acao_views
@@ -90,6 +99,14 @@ async def on_ready():
 
         # Enviar os botões
         await canal_relatorio.send(view=RelatorioView())
+
+async def enviar_dm_erro(usuario_id: int, mensagem: str):
+    try:
+        user = await bot.fetch_user(usuario_id)
+        await user.send(f"❌ **Erro detectado no bot:**\n```{mensagem}```")
+    except Exception as e:
+        logger.warning(f"[ERRO_DM] Falha ao enviar DM: {e}")
+
 
 bot.run(TOKEN)
 #trigger redeploy
