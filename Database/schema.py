@@ -2,7 +2,14 @@ import sqlite3
 from utils.logger import logger
 
 def criar_tabelas():
-    conn = sqlite3.connect("relatorio.db")
+    from utils.db import get_db_connection
+    conn = get_db_connection()
+    # Verifica se a conexão foi bem-sucedida
+    if conn is None:
+        logger.error("❌ Não foi possível conectar ao banco de dados.")
+        return
+    logger.info("✅ Conexão com o banco de dados estabelecida.")
+
     cursor = conn.cursor()
 
     # Tabela de ações
