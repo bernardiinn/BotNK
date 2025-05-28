@@ -176,6 +176,8 @@ class EscolhaInicial(discord.ui.View):
 
         await interaction.response.send_modal(ActionModal(self.tipo_acao, self.resultado, self.operacao))
 
+from utils.logger import logger  # Certifique-se de importar o logger
+
 class ActionModal(discord.ui.Modal, title="Registrar Ação"):
     def __init__(self, tipo_acao, resultado, operacao):
         super().__init__()
@@ -190,24 +192,32 @@ class ActionModal(discord.ui.Modal, title="Registrar Ação"):
         self.add_item(self.data_hora)
         self.add_item(self.dinheiro)
 
-        async def on_submit(self, interaction: discord.Interaction):
-            try:
-                partes = self.data_hora.value.split(" -")
-                data_raw = partes[0] + " - " + partes[1]
-                dt = datetime.strptime(data_raw.strip(), "%d/%m/%Y - %H:%M")
-                data_formatada = dt.strftime("%d/%m/%Y - %H:%M")
-            except Exception as e:
-                await interaction.response.send_message(f"❌ Data e hora inválida: {e}", ephemeral=True)
-                return
+    async def on_submit(self, interaction: discord.Interaction):
+        logger.info("[ActionModal] Enviando formulário...")
+        logger.info(f"[ActionModal] Valores recebidos: Data={self.data_hora.value}, Dinheiro={self.dinheiro.value}")
 
-            try:
-                dinheiro_formatado = f"R$ {int(self.dinheiro.value):,}".replace(",", ".")
-            except ValueError:
-                await interaction.response.send_message("❌ Dinheiro inválido.", ephemeral=True)
-                return
+        try:
+            partes = self.data_hora.value.split(" -")
+            data_raw = partes[0] + " - " + partes[1]
+            dt = datetime.strptime(data_raw.strip(), "%d/%m/%Y - %H:%M")
+            data_formatada = dt.strftime("%d/%m/%Y - %H:%M")
+            logger.info(f"[ActionModal] Data formatada: {data_formatada}")
+        except Exception as e:
+            logger.error(f"[ActionModal] Erro ao validar data: {e}")
+            await interaction.response.send_message(f"❌ Data e hora inválida: {e}", ephemeral=True)
+            return
 
-            from Views.participantes import PaginatedSelectView
+        try:
+            dinheiro_formatado = f"R$ {int(self.dinheiro.value):,}".replace(",", ".")
+            logger.info(f"[ActionModal] Dinheiro formatado: {dinheiro_formatado}")
+        except ValueError as e:
+            logger.error(f"[ActionModal] Erro ao validar dinheiro: {e}")
+            await interaction.response.send_message("❌ Dinheiro inválido.", ephemeral=True)
+            return
 
+        from Views.participantes import PaginatedSelectView
+
+        try:
             view = PaginatedSelectView(
                 self.tipo_acao,
                 self.resultado,
@@ -216,8 +226,11 @@ class ActionModal(discord.ui.Modal, title="Registrar Ação"):
                 dinheiro_formatado,
                 interaction.guild
             )
+            logger.info("[ActionModal] PaginatedSelectView criado com sucesso.")
             await interaction.response.send_message("Agora selecione os participantes:", view=view, ephemeral=True)
-            
+        except Exception as e:
+            logger.error(f"[ActionModal] Erro ao criar ou enviar PaginatedSelectView: {e}")
+            await interaction.response.send_message("❌ Erro interno ao exibir participantes.", ephemeral=True)            
 
 async def enviar_acao_completa(interaction: discord.Interaction, embed: discord.Embed, participantes: list, acao_id: int):
     canal = interaction.guild.get_channel(ID_CANAL_ACOES)
