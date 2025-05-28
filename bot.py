@@ -3,7 +3,7 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 import shutil
-
+import logging
 from utils.logger import setup_logging
 logger = setup_logging()
 
