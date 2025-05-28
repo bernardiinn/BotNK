@@ -10,9 +10,9 @@ def setup(bot: commands.Bot):
     async def registrar_acao(interaction: discord.Interaction):
         await interaction.response.send_message("Escolha o Tipo da Ação, Resultado e Tipo de Operação:", view=EscolhaInicial(), ephemeral=True)
 
-    @bot.tree.command(name="registrar_meta", description="Registrar uma entrega de meta.")
-    async def registrar_meta(interaction: discord.Interaction):
-        await interaction.response.send_modal(MetaModal())
+    # @bot.tree.command(name="registrar_meta", description="Registrar uma entrega de meta.")
+    # async def registrar_meta(interaction: discord.Interaction):
+    #     await interaction.response.send_modal(MetaModal())
 
     @bot.tree.command(name="relatorio", description="Ver relatórios semanais ou por membro.")
     async def relatorio(interaction: discord.Interaction):
