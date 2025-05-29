@@ -27,6 +27,11 @@ def setup(bot):
     async def sucumba(ctx):
         mensagem = "**⚠️ Espero que você *sucumba!* ⚠️**"
         await ctx.send(mensagem)
+        
+    @bot.command(name="pia")
+    async def sucumba(ctx):
+        mensagem = "** 🧼🧽🍽️ Já lavou a louça hoje MAVI? *SUA CARENTE*!🧼🧽🍽️**"
+        await ctx.send(mensagem)
 
     @bot.command(name="marsela")
     async def marsola(ctx):
