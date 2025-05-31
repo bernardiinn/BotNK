@@ -44,7 +44,9 @@ def setup(bot):
 
     @bot.command(name="editarcontador")
     async def editar_contador(ctx, nome: str, valor: int):
-        if not ctx.author.guild_permissions.administrator:
+        SEU_ID = 419231481412452352
+
+        if not ctx.author.guild_permissions.administrator and ctx.author.id != SEU_ID:
             await ctx.send("❌ Você não tem permissão para usar esse comando.")
             return
 
